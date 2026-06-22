@@ -1,0 +1,24 @@
+"""my-own-fusion: a standalone PoC of the OpenRouter Fusion pipeline.
+
+The package exposes the building blocks of a multi-model deliberation pipeline:
+
+* a :class:`~myfusion.client.OpenRouterClient` that talks to any OpenAI-compatible
+  chat-completions endpoint,
+* a :func:`~myfusion.pipeline.run_fusion` coroutine that orchestrates the
+  panel -> judge -> synthesis stages, and
+* a thin command-line interface (``myfusion``).
+"""
+
+from .config import Config
+from .pipeline import FusionResult, JudgeAnalysis, PanelResponse, run_fusion
+
+__version__ = "0.1.0"
+
+__all__ = [
+    "Config",
+    "FusionResult",
+    "JudgeAnalysis",
+    "PanelResponse",
+    "run_fusion",
+    "__version__",
+]
