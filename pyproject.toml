@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "A standalone Proof-of-Concept of the OpenRouter Fusion multi-model deliberation pipeline."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = { text = "WTFPL" }
 authors = [{ name = "ssig33" }]
 keywords = ["llm", "openrouter", "fusion", "ensemble", "multi-model"]
 dependencies = ["httpx>=0.27"]

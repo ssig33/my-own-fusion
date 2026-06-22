@@ -186,4 +186,4 @@ overkill for quick questions and worth it when being wrong is expensive.
 
 ## License
 
-[MIT](LICENSE)
+[WTFPL](LICENSE)
