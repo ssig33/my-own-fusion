@@ -24,12 +24,28 @@ JUDGE_PAYLOAD = {
 }
 
 
-def _handler(request: httpx.Request) -> httpx.Response:
-    """Route mock completions by the model field in the request body."""
+def _responses_body(content: str) -> dict:
+    """A Responses API body with a reasoning item ahead of the message."""
 
+    return {
+        "output": [
+            {"type": "reasoning", "summary": []},
+            {
+                "type": "message",
+                "role": "assistant",
+                "content": [{"type": "output_text", "text": content}],
+            },
+        ]
+    }
+
+
+def _handler(request: httpx.Request) -> httpx.Response:
+    """Route mock responses by the model field in the request body."""
+
+    assert request.url.path.endswith("/responses")
     body = json.loads(request.content)
     model = body["model"]
-    messages = body["messages"]
+    messages = body["input"]
     system = messages[0]["content"] if messages and messages[0]["role"] == "system" else ""
 
     if "impartial judge" in system:
@@ -40,10 +56,7 @@ def _handler(request: httpx.Request) -> httpx.Response:
         # A panel member: echo which model answered.
         content = f"Answer from {model}: light scatters in the atmosphere."
 
-    return httpx.Response(
-        200,
-        json={"choices": [{"message": {"role": "assistant", "content": content}}]},
-    )
+    return httpx.Response(200, json=_responses_body(content))
 
 
 def _make_client() -> OpenRouterClient:
@@ -58,8 +71,8 @@ def test_full_pipeline_offline() -> None:
             result = await run_fusion(
                 client,
                 "Why is the sky blue?",
-                panel_models=["openai/gpt-4o-mini", "anthropic/claude-3.5-haiku"],
-                judge_model="openai/gpt-4o",
+                panel_models=["openai/gpt-6-luna", "anthropic/claude-3.5-haiku"],
+                judge_model="openai/gpt-6-luna",
                 synth_model="anthropic/claude-3.5-sonnet",
             )
 
@@ -94,8 +107,8 @@ def test_panel_failure_is_tolerated() -> None:
             result = await run_fusion(
                 client,
                 "Why is the sky blue?",
-                panel_models=["broken/model", "openai/gpt-4o-mini"],
-                judge_model="openai/gpt-4o",
+                panel_models=["broken/model", "openai/gpt-6-luna"],
+                judge_model="openai/gpt-6-luna",
                 synth_model="anthropic/claude-3.5-sonnet",
             )
 
@@ -107,6 +120,50 @@ def test_panel_failure_is_tolerated() -> None:
         assert "Rayleigh" in result.final_answer
 
     asyncio.run(scenario())
+
+
+def test_complete_builds_responses_payload() -> None:
+    captured: list[dict] = []
+
+    def capture(request: httpx.Request) -> httpx.Response:
+        captured.append(json.loads(request.content))
+        return httpx.Response(200, json=_responses_body('{"consensus": []}'))
+
+    async def scenario() -> list[str]:
+        http_client = httpx.AsyncClient(transport=httpx.MockTransport(capture))
+        async with OpenRouterClient(
+            "k", "https://example.invalid/v1", http_client=http_client
+        ) as client:
+            return [
+                await client.complete(
+                    "openai/gpt-6-luna",
+                    [{"role": "user", "content": "hi"}],
+                    temperature=0.2,
+                    max_tokens=50,
+                    response_format={"type": "json_object"},
+                ),
+                await client.complete(
+                    "anthropic/claude-haiku-5.5",
+                    [{"role": "user", "content": "hi"}],
+                ),
+            ]
+
+    assert asyncio.run(scenario()) == ['{"consensus": []}'] * 2
+    assert captured == [
+        {
+            "model": "openai/gpt-6-luna",
+            "input": [{"role": "user", "content": "hi"}],
+            "temperature": 0.2,
+            "reasoning": {"effort": "none"},
+            "max_output_tokens": 50,
+            "text": {"format": {"type": "json_object"}},
+        },
+        {
+            "model": "anthropic/claude-haiku-5.5",
+            "input": [{"role": "user", "content": "hi"}],
+            "temperature": 0.7,
+        },
+    ]
 
 
 def test_extract_json_object_handles_fenced_output() -> None:

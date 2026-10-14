@@ -7,7 +7,7 @@ question, have a **judge** model compare their answers, and let a final model
 **synthesize** the best possible response from that comparison.
 
 This repo re-implements that pipeline from scratch against the plain
-OpenAI-compatible `/chat/completions` API, so you can see exactly how each stage
+OpenAI-compatible `/responses` (Responses) API, so you can see exactly how each stage
 works and run it yourself with nothing but an API key.
 
 > This is an independent educational PoC. It is **not** the official OpenRouter
@@ -96,8 +96,8 @@ uv run myfusion --json "Explain CAP theorem" > result.json
 
 # Pick your own models
 uv run myfusion \
-  --panel "openai/gpt-4o-mini,anthropic/claude-3.5-haiku,google/gemini-2.0-flash-001" \
-  --judge "openai/gpt-4o" \
+  --panel "openai/gpt-6-luna,anthropic/claude-3.5-haiku,google/gemini-2.0-flash-001" \
+  --judge "openai/gpt-6-luna" \
   --synth "anthropic/claude-3.5-sonnet" \
   "Design a rate limiter for a public API."
 ```
@@ -169,7 +169,7 @@ uv run pytest
 
 ```
 src/myfusion/
-  client.py     # async OpenAI-compatible chat-completions client
+  client.py     # async OpenAI-compatible Responses API client
   config.py     # env/.env configuration loading and defaults
   pipeline.py   # the panel -> judge -> synthesis pipeline
   cli.py        # command-line interface

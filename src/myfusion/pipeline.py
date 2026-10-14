@@ -1,6 +1,6 @@
 """The Fusion pipeline: panel -> judge -> synthesis.
 
-This re-implements, against the raw chat-completions API, the three-stage idea
+This re-implements, against the raw Responses API, the three-stage idea
 described by OpenRouter's Fusion plugin:
 
 1. **Panel** - a set of models answers the same prompt in parallel.

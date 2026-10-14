@@ -1,8 +1,8 @@
-"""A minimal async client for OpenAI-compatible chat-completions endpoints.
+"""A minimal async client for OpenAI-compatible Responses API endpoints.
 
 The client targets OpenRouter (https://openrouter.ai/api/v1) by default, but any
-endpoint that speaks the OpenAI ``/chat/completions`` shape works, including a
-local mock used by the test suite.
+endpoint that speaks the OpenAI ``/responses`` shape works, including the OpenAI
+API itself and a local mock used by the test suite.
 """
 
 from __future__ import annotations
@@ -14,13 +14,18 @@ import httpx
 # Message is a list of {"role": ..., "content": ...} dicts.
 Message = dict[str, str]
 
+# Models that reason by default and then reject ``temperature``. They are sent
+# reasoning effort "none" so sampling stays controllable. Other models get no
+# ``reasoning`` field (some cannot disable reasoning and return 400 for "none").
+NO_REASONING_MODELS = frozenset({"openai/gpt-6-luna", "gpt-6-luna"})
+
 
 class OpenRouterError(RuntimeError):
     """Raised when the upstream API returns a non-success response."""
 
 
 class OpenRouterClient:
-    """Thin wrapper around the chat-completions endpoint."""
+    """Thin wrapper around the Responses API endpoint."""
 
     def __init__(
         self,
@@ -64,11 +69,11 @@ class OpenRouterClient:
         max_tokens: int | None = None,
         response_format: dict[str, Any] | None = None,
     ) -> str:
-        """Run a single chat completion and return the assistant text.
+        """Run a single Responses API call and return the assistant text.
 
         Args:
-            model: Model slug, e.g. ``"openai/gpt-4o-mini"``.
-            messages: OpenAI-style message list.
+            model: Model slug, e.g. ``"openai/gpt-6-luna"``.
+            messages: OpenAI-style message list, sent as the ``input`` items.
             temperature: Sampling temperature.
             max_tokens: Optional cap on generated tokens.
             response_format: Optional structured-output hint, e.g.
@@ -80,15 +85,17 @@ class OpenRouterClient:
 
         payload: dict[str, Any] = {
             "model": model,
-            "messages": messages,
+            "input": messages,
             "temperature": temperature,
         }
+        if model in NO_REASONING_MODELS:
+            payload["reasoning"] = {"effort": "none"}
         if max_tokens is not None:
-            payload["max_tokens"] = max_tokens
+            payload["max_output_tokens"] = max_tokens
         if response_format is not None:
-            payload["response_format"] = response_format
+            payload["text"] = {"format": response_format}
 
-        url = f"{self._base_url}/chat/completions"
+        url = f"{self._base_url}/responses"
         try:
             response = await self._client.post(url, headers=self._headers, json=payload)
         except httpx.HTTPError as exc:  # network-level failures
@@ -101,8 +108,18 @@ class OpenRouterClient:
 
         try:
             data = response.json()
-            return data["choices"][0]["message"]["content"]
-        except (KeyError, IndexError, ValueError) as exc:
+            # ``output`` may also hold reasoning items; only messages carry text.
+            texts = [
+                part["text"]
+                for item in data["output"]
+                if item["type"] == "message"
+                for part in item["content"]
+                if part["type"] == "output_text"
+            ]
+        except (KeyError, TypeError, ValueError) as exc:
             raise OpenRouterError(
                 f"could not parse response from {model}: {exc}"
             ) from exc
+        if not texts:
+            raise OpenRouterError(f"{model} returned no output text")
+        return "".join(texts)
