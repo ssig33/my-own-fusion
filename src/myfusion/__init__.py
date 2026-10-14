@@ -3,7 +3,7 @@
 The package exposes the building blocks of a multi-model deliberation pipeline:
 
 * a :class:`~myfusion.client.OpenRouterClient` that talks to any OpenAI-compatible
-  chat-completions endpoint,
+  Responses API endpoint,
 * a :func:`~myfusion.pipeline.run_fusion` coroutine that orchestrates the
   panel -> judge -> synthesis stages, and
 * a thin command-line interface (``myfusion``).

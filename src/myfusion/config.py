@@ -22,13 +22,13 @@ DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 # Swap these for whatever is currently available on your account; see
 # https://openrouter.ai/models for the live catalogue.
 DEFAULT_PANEL_MODELS: tuple[str, ...] = (
-    "openai/gpt-4o-mini",
+    "openai/gpt-6-luna",
     "anthropic/claude-3.5-haiku",
     "google/gemini-2.0-flash-001",
 )
 
 # The judge compares the panel responses and emits structured JSON analysis.
-DEFAULT_JUDGE_MODEL = "openai/gpt-4o"
+DEFAULT_JUDGE_MODEL = "openai/gpt-6-luna"
 
 # The synthesizer reads the analysis and writes the final answer.
 DEFAULT_SYNTH_MODEL = "anthropic/claude-3.5-sonnet"
