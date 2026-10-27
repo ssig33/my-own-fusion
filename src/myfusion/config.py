@@ -57,7 +57,7 @@ def load_dotenv(path: str | os.PathLike[str] = ".env") -> None:
             os.environ[key] = value
 
 
-def _split_models(value: str | None) -> list[str] | None:
+def split_models(value: str | None) -> list[str] | None:
     """Parse a comma-separated model list, dropping empties."""
 
     if not value:
@@ -95,7 +95,7 @@ class Config:
             )
 
         base_url = os.environ.get("OPENROUTER_BASE_URL", DEFAULT_BASE_URL).strip()
-        panel = _split_models(os.environ.get("FUSION_PANEL_MODELS"))
+        panel = split_models(os.environ.get("FUSION_PANEL_MODELS"))
         judge = os.environ.get("FUSION_JUDGE_MODEL", "").strip() or DEFAULT_JUDGE_MODEL
         synth = os.environ.get("FUSION_SYNTH_MODEL", "").strip() or DEFAULT_SYNTH_MODEL
 

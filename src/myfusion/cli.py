@@ -23,6 +23,7 @@ from .config import (
     DEFAULT_SYNTH_MODEL,
     Config,
     load_dotenv,
+    split_models,
 )
 from .pipeline import FusionResult, run_fusion
 
@@ -119,21 +120,14 @@ def _print_stages(result: FusionResult) -> None:
 
     analysis = result.analysis
     out.write(f"\n===== JUDGE ANALYSIS ({result.judge_model}) =====\n")
-    sections = [
-        ("Consensus", analysis.consensus),
-        ("Contradictions", analysis.contradictions),
-        ("Partial coverage", analysis.partial_coverage),
-        ("Unique insights", analysis.unique_insights),
-        ("Blind spots", analysis.blind_spots),
-    ]
-    for title, items in sections:
+    for title, items in analysis.sections():
         out.write(f"\n{title}:\n")
         if items:
             for item in items:
                 out.write(f"  - {item}\n")
         else:
             out.write("  (none)\n")
-    if not any(items for _title, items in sections) and analysis.raw:
+    if analysis.is_empty and analysis.raw:
         out.write(f"\n(raw judge output)\n{analysis.raw}\n")
 
 
@@ -171,7 +165,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # CLI flags override environment/defaults.
     if args.panel:
-        config.panel_models = [m.strip() for m in args.panel.split(",") if m.strip()]
+        config.panel_models = split_models(args.panel) or []
     if args.judge:
         config.judge_model = args.judge
     if args.synth:

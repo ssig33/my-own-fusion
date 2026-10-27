@@ -9,10 +9,12 @@ The package exposes the building blocks of a multi-model deliberation pipeline:
 * a thin command-line interface (``myfusion``).
 """
 
+from importlib.metadata import version
+
 from .config import Config
 from .pipeline import FusionResult, JudgeAnalysis, PanelResponse, run_fusion
 
-__version__ = "0.1.0"
+__version__ = version("my-own-fusion")
 
 __all__ = [
     "Config",
