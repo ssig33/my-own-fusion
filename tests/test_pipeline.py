@@ -13,7 +13,14 @@ import json
 import httpx
 
 from myfusion.client import OpenRouterClient
-from myfusion.pipeline import _extract_json_object, run_fusion
+from myfusion.pipeline import (
+    JudgeAnalysis,
+    PanelResponse,
+    _extract_json_object,
+    _format_analysis_for_synth,
+    run_fusion,
+    run_judge,
+)
 
 JUDGE_PAYLOAD = {
     "consensus": ["The sky appears blue due to scattering of light."],
@@ -172,3 +179,32 @@ def test_extract_json_object_handles_fenced_output() -> None:
     assert parsed == {"consensus": ["x"]}
 
     assert _extract_json_object("not json at all") is None
+
+
+def test_run_judge_keeps_raw_text_when_not_json() -> None:
+    def prose(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=_responses_body("I refuse to emit JSON."))
+
+    async def scenario() -> JudgeAnalysis:
+        http_client = httpx.AsyncClient(transport=httpx.MockTransport(prose))
+        async with OpenRouterClient(
+            "k", "https://example.invalid/v1", http_client=http_client
+        ) as client:
+            return await run_judge(
+                client, "q", [PanelResponse(model="a/x", content="answer")], "j/z"
+            )
+
+    analysis = asyncio.run(scenario())
+    assert analysis == JudgeAnalysis(raw="I refuse to emit JSON.")
+    assert analysis.is_empty
+
+
+def test_format_analysis_for_synth() -> None:
+    structured = _format_analysis_for_synth(
+        "q", JudgeAnalysis(consensus=["agreed"], raw="{}")
+    )
+    assert "JUDGE ANALYSIS:\nConsensus:\n  - agreed\nContradictions: (none)" in structured
+    assert "Blind spots: (none)" in structured
+
+    raw_only = _format_analysis_for_synth("q", JudgeAnalysis(raw="judge rambled"))
+    assert "JUDGE ANALYSIS (raw):\njudge rambled" in raw_only
