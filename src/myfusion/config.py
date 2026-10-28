@@ -17,21 +17,22 @@ from pathlib import Path
 
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 
-# A small, cheap, provider-diverse default panel. Diversity is the point of
-# Fusion: panel members should disagree often enough to be worth comparing.
-# Swap these for whatever is currently available on your account; see
-# https://openrouter.ai/models for the live catalogue.
+# The panel is cheap and provider-diverse: three small models from different
+# vendors, so they disagree often enough to be worth comparing while the whole
+# panel still costs less than one mid-tier completion. Swap these for whatever
+# is currently available on your account; see https://openrouter.ai/models for
+# the live catalogue.
 DEFAULT_PANEL_MODELS: tuple[str, ...] = (
     "openai/gpt-6-luna",
-    "anthropic/claude-3.5-haiku",
-    "google/gemini-2.0-flash-001",
+    "anthropic/claude-haiku-5.5",
+    "deepseek/deepseek-v4.1-flash-1017",
 )
 
-# The judge compares the panel responses and emits structured JSON analysis.
-DEFAULT_JUDGE_MODEL = "openai/gpt-6-luna"
-
-# The synthesizer reads the analysis and writes the final answer.
-DEFAULT_SYNTH_MODEL = "anthropic/claude-3.5-sonnet"
+# The judge and the synthesizer are where quality pays off, so both use a
+# stronger mid-tier model. The judge compares the panel responses and emits
+# structured JSON analysis; the synthesizer writes the final answer from it.
+DEFAULT_JUDGE_MODEL = "openai/gpt-6.1-terra"
+DEFAULT_SYNTH_MODEL = "openai/gpt-6.1-terra"
 
 
 def load_dotenv(path: str | os.PathLike[str] = ".env") -> None:
