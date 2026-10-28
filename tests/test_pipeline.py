@@ -78,9 +78,9 @@ def test_full_pipeline_offline() -> None:
             result = await run_fusion(
                 client,
                 "Why is the sky blue?",
-                panel_models=["openai/gpt-6-luna", "anthropic/claude-3.5-haiku"],
+                panel_models=["openai/gpt-6-luna", "anthropic/claude-haiku-5.5"],
                 judge_model="openai/gpt-6-luna",
-                synth_model="anthropic/claude-3.5-sonnet",
+                synth_model="openai/gpt-6.1-terra",
             )
 
         assert len(result.panel) == 2
@@ -116,7 +116,7 @@ def test_panel_failure_is_tolerated() -> None:
                 "Why is the sky blue?",
                 panel_models=["broken/model", "openai/gpt-6-luna"],
                 judge_model="openai/gpt-6-luna",
-                synth_model="anthropic/claude-3.5-sonnet",
+                synth_model="openai/gpt-6.1-terra",
             )
 
         ok = [p for p in result.panel if p.ok]

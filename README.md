@@ -94,11 +94,11 @@ uv run myfusion --show-stages "Why do distributed systems prefer idempotent oper
 # Get the whole run as machine-readable JSON
 uv run myfusion --json "Explain CAP theorem" > result.json
 
-# Pick your own models
+# Pick your own models, e.g. a pricier panel of frontier models
 uv run myfusion \
-  --panel "openai/gpt-6-luna,anthropic/claude-3.5-haiku,google/gemini-2.0-flash-001" \
-  --judge "openai/gpt-6-luna" \
-  --synth "anthropic/claude-3.5-sonnet" \
+  --panel "openai/gpt-6.1-sol,anthropic/claude-sonnet-5.5,google/gemini-4-argon" \
+  --judge "openai/gpt-6.1-sol" \
+  --synth "anthropic/claude-sonnet-5.5" \
   "Design a rate limiter for a public API."
 ```
 
@@ -130,9 +130,13 @@ Lowest to highest priority:
    `FUSION_SYNTH_MODEL`,
 3. command-line flags.
 
-The default models are intentionally small and cheap. Model availability changes
-over time — check <https://openrouter.ai/models> and override the defaults with
-the flags above as needed.
+The defaults spend little on the panel and more on the judge and synthesizer:
+three small models from different vendors (`openai/gpt-6-luna`,
+`anthropic/claude-haiku-5.5`, `deepseek/deepseek-v4.1-flash-1017`) answer, and
+the mid-tier `openai/gpt-6.1-terra` judges and writes the final answer. A
+typical run costs about one to three US cents on OpenRouter. Model availability
+changes over time — check <https://openrouter.ai/models> and override the
+defaults with the flags above as needed.
 
 ## Using it as a library
 

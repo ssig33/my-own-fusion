@@ -4,7 +4,7 @@ Usage examples::
 
     myfusion "Compare ridge, lasso, and elastic-net regression."
     echo "Are carbon taxes effective?" | myfusion -
-    myfusion "..." --panel openai/gpt-6-luna,x-ai/grok-2 --judge openai/gpt-6-luna
+    myfusion "..." --panel openai/gpt-6-luna,x-ai/grok-4.3 --judge openai/gpt-6.1-terra
     myfusion "..." --json > result.json
 """
 
