@@ -70,6 +70,23 @@ class JudgeAnalysis:
             raw=raw,
         )
 
+    def sections(self) -> list[tuple[str, list[str]]]:
+        """The five analysis fields as ``(title, items)`` pairs, in display order."""
+
+        return [
+            ("Consensus", self.consensus),
+            ("Contradictions", self.contradictions),
+            ("Partial coverage", self.partial_coverage),
+            ("Unique insights", self.unique_insights),
+            ("Blind spots", self.blind_spots),
+        ]
+
+    @property
+    def is_empty(self) -> bool:
+        """True when no structured field has any item (only ``raw`` may be set)."""
+
+        return not any(items for _title, items in self.sections())
+
 
 @dataclass
 class FusionResult:
@@ -238,27 +255,13 @@ def _format_analysis_for_synth(prompt: str, analysis: JudgeAnalysis) -> str:
         bullets = "\n".join(f"  - {item}" for item in items)
         return f"{title}:\n{bullets}"
 
-    if analysis.raw and not any(
-        [
-            analysis.consensus,
-            analysis.contradictions,
-            analysis.partial_coverage,
-            analysis.unique_insights,
-            analysis.blind_spots,
-        ]
-    ):
+    if analysis.raw and analysis.is_empty:
         # Fallback: hand the raw judge text to the synthesizer.
         analysis_block = f"JUDGE ANALYSIS (raw):\n{analysis.raw}"
     else:
         analysis_block = "\n".join(
-            [
-                "JUDGE ANALYSIS:",
-                section("Consensus", analysis.consensus),
-                section("Contradictions", analysis.contradictions),
-                section("Partial coverage", analysis.partial_coverage),
-                section("Unique insights", analysis.unique_insights),
-                section("Blind spots", analysis.blind_spots),
-            ]
+            ["JUDGE ANALYSIS:"]
+            + [section(title, items) for title, items in analysis.sections()]
         )
 
     return f"ORIGINAL PROMPT:\n{prompt}\n\n{analysis_block}\n\nWrite the final answer now."
